@@ -346,6 +346,7 @@ namespace WADFormat
         // (General) identify music format
         public string IdentifyMusicLumpExtension(WADLump lumpy, string _default)
         {
+            if (lumpy.data == null) return _default;
             char[] data = Encoding.ASCII.GetString(lumpy.data).ToCharArray();
             string readstringloop(int length, int i = 0)
             {
