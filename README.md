@@ -17,7 +17,7 @@ Available arguments:
 | -nocompression | Don't use compression. |
 
 # License
-All code is GPL3 licensed.
+All code is licensed under the [GNU GPL3](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
 All graphics are from [Sonic Robo Blast 2](https://srb2.org) by Sonic Team Junior.
 
