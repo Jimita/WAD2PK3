@@ -111,9 +111,9 @@
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(12, 223);
+            this.label2.Location = new System.Drawing.Point(13, 223);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(157, 13);
+            this.label2.Size = new System.Drawing.Size(156, 13);
             this.label2.TabIndex = 6;
             this.label2.Text = "No file loaded.";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -267,10 +267,10 @@
             // fileicon
             // 
             this.fileicon.Image = global::WAD2PK3.Properties.Resources.M_FWAD;
-            this.fileicon.Location = new System.Drawing.Point(56, 156);
+            this.fileicon.Location = new System.Drawing.Point(16, 156);
             this.fileicon.Name = "fileicon";
-            this.fileicon.Size = new System.Drawing.Size(64, 64);
-            this.fileicon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.fileicon.Size = new System.Drawing.Size(153, 64);
+            this.fileicon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.fileicon.TabIndex = 5;
             this.fileicon.TabStop = false;
             this.fileicon.Tag = "";
@@ -332,7 +332,6 @@
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Button button_open;
         private System.Windows.Forms.Button button_save;
-        private System.Windows.Forms.PictureBox fileicon;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox checkBox_extensions;
@@ -348,6 +347,7 @@
         private System.Windows.Forms.RadioButton radio_optimalcompression;
         private System.Windows.Forms.RadioButton radio_fastestcompression;
         private System.Windows.Forms.RadioButton radio_nocompression;
+        private System.Windows.Forms.PictureBox fileicon;
     }
 }
 
