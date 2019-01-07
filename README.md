@@ -3,7 +3,7 @@ A program to convert Doom WAD files to the [PK3](https://wiki.srb2.org/wiki/PK3)
 
 # Command-line usage
 Passing parameters `-input` and `-output` will open a command-line window instead of the GUI interface.
-Avaliable arguments:
+Available arguments:
 
 | Argument | Description |
 | -------- | ----------- |
