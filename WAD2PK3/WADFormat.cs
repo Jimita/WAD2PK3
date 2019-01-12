@@ -67,6 +67,52 @@ namespace WADFormat
             Process.GetCurrentProcess().Kill();
         }
 
+        public bool IsLumpGraphic(byte[] lump_data, uint size)
+        {
+            int header = 6;                  // size of patch header
+            if (size > header && size >= 13) // size of a 1x1 patch (13 bytes)
+            {
+                int read;
+                int lump_read_bytes_as_uint16()
+                {
+                    if (read + 1 > size) return 0;
+                    return BitConverter.ToUInt16(new byte[2] { lump_data[read], lump_data[read + 1] }, 0);
+                }
+                uint lump_read_bytes_as_uint32()
+                {
+                    if (read + 3 > size) return 0;
+                    return BitConverter.ToUInt32(new byte[4] { lump_data[read], lump_data[read + 1], lump_data[read + 2], lump_data[read + 3] }, 0);
+                }
+                uint width = 0, height = 0;
+                uint[] column_offsets = new uint[0];
+                for (read = 0; read < size;)
+                {
+                    width = (uint)lump_read_bytes_as_uint16();
+                    read += 2;      // short
+                    height = (uint)lump_read_bytes_as_uint16();
+                    if (width >= 32768 || (int)width < 1 || height >= 32768 || (int)height < 1)
+                        return false;
+                    Array.Resize(ref column_offsets, (int)width);
+                    read += 6;      // short * 3
+                    for (int col = 0; col < width - 1; col++)
+                    {
+                        column_offsets[col] = lump_read_bytes_as_uint32();
+                        read += 4;      // long
+                    }
+                    break;
+                }
+                if (size < header + (width * 2))
+                    return false;
+                for (int col = 0; col < width - 1; col++)
+                {
+                    if (column_offsets[col] > size || column_offsets[col] < header)
+                        return false;
+                }
+                return true;
+            }
+            return false;
+        }
+
         public WADFile ReadFile(string wadfilename, object sender)
         {
             // create WADFile
@@ -173,9 +219,10 @@ namespace WADFormat
 
                 // identify lump type
                 bool is_marker = false;
-                if (current_lump_type == LumpType.Generic)
+                if (current_lump_type == LumpType.Generic || current_lump_type == LumpType.Skin)
                 {
-                    singletype = true;
+                    if (current_lump_type != LumpType.Skin)
+                        singletype = true;
                     if (name.Length >= 4 && name.Substring(0, 4) == "LUA_") current_lump_type = LumpType.Lua;
                     else if (name.Length >= 4 && name.Substring(0, 4) == "SOC_") current_lump_type = LumpType.SOC;
                     else if (name == "MAINCFG") current_lump_type = LumpType.SOC; /* SOC */
@@ -198,6 +245,8 @@ namespace WADFormat
                     else if (name == "P_START" || name == "PP_START") { current_lump_type = LumpType.Patch; is_marker = true; singletype = false; }
                     else if (name == "F_START" || name == "FF_START") { current_lump_type = LumpType.Flat; is_marker = true; singletype = false; }
                     else if (name == "S_START" || name == "SS_START") { current_lump_type = LumpType.Sprite; is_marker = true; singletype = false; }
+                    // skins
+                    else if (name.Length >= 6 && name.Substring(0, 6) == "S_SKIN") { current_lump_type = LumpType.Skin; singletype = false; }
                 }
                 else
                 {
@@ -281,49 +330,18 @@ namespace WADFormat
                     // Detect if the lump is a graphic.
                     if (current_lump_type == LumpType.Generic)
                     {
-                        int header = 6;                  // size of patch header
-                        if (size > header && size >= 13) // size of a 1x1 patch (13 bytes)
-                        {
-                            int read;
-                            int lump_read_bytes_as_uint16()
-                            {
-                                if (read + 1 > size) return 0;
-                                return BitConverter.ToUInt16(new byte[2] { lump_data[read], lump_data[read + 1] }, 0);
-                            }
-                            uint lump_read_bytes_as_uint32()
-                            {
-                                if (read + 3 > size) return 0;
-                                return BitConverter.ToUInt32(new byte[4] { lump_data[read], lump_data[read + 1], lump_data[read + 2], lump_data[read + 3] }, 0);
-                            }
-                            uint width = 0, height = 0;
-                            uint[] column_offsets = new uint[0];
-                            for (read = 0; read < size;)
-                            {
-                                width = (uint)lump_read_bytes_as_uint16();
-                                read += 2;      // short
-                                height = (uint)lump_read_bytes_as_uint16();
-                                if (width >= 32768 || (int)width < 1 || height >= 32768 || (int)height < 1)
-                                    goto fail;
-                                Array.Resize(ref column_offsets, (int)width);
-                                read += 6;      // short * 3
-                                for (int col = 0; col < width - 1; col++)
-                                {
-                                    column_offsets[col] = lump_read_bytes_as_uint32();
-                                    read += 4;      // long
-                                }
-                                break;
-                            }
-                            if (size < header + (width * 2))
-                                goto fail;
-                            for (int col = 0; col < width - 1; col++)
-                            {
-                                if (column_offsets[col] > size || column_offsets[col] < header)
-                                    goto fail;
-                            }
+                        if (IsLumpGraphic(lump_data, size))
                             current_lump_type = LumpType.Graphic;
-                        }
                     }
-                    fail: wad.lumps[wad.numlumps].type = current_lump_type;
+                    wad.lumps[wad.numlumps].type = current_lump_type;
+                }
+                // Skins would be totally fine, it it wasn't for SLADE.
+                // The ordering is correct, until another editor is involved.
+                // Now they need to go inside a folder.
+                if (current_lump_type == LumpType.Skin && name.Substring(0, 6) != "S_SKIN")
+                {
+                    if (!IsLumpGraphic(lump_data, size))
+                        current_lump_type = LumpType.Generic;
                 }
                 skiplumpwrite: wad.numlumps++;
                 if (singletype) current_lump_type = LumpType.Generic;
@@ -394,7 +412,7 @@ namespace WADFormat
             // detect extensions
             string ext = "";
             // lump names or lump types that won't write extensions
-            if (lumpy.type == LumpType.Marker || lumpy.type == LumpType.Fademask 
+            if (lumpy.type == LumpType.Marker || lumpy.type == LumpType.Fademask
                 || f == "ANIMDEFS" || f == "TEXTURES")
                 UseExtensions = false;
             // use extensions otherwise if requested to
@@ -442,6 +460,7 @@ namespace WADFormat
                         else return defaultreturn;
                     }
                 }
+                case LumpType.Skin: return "Skins/" + f;
                 case LumpType.Graphic: return "Graphics/" + f + ext;
                 case LumpType.Patch: return "Patches/" + f + ext;
                 case LumpType.Texture: return "Textures/" + f + ext;
@@ -659,7 +678,7 @@ namespace WADFormat
     enum LumpType
     {
         Generic,
-        Lua, SOC,
+        Lua, SOC, Skin,
         Graphic, Patch, Texture, Flat, Sprite,
         Music, Sound,
         Text, Marker, Demo,
