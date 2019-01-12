@@ -202,8 +202,8 @@ namespace WAD2PK3
                     dataGridView1.Rows.Clear();
                     // reset progress bar
                     progressBar1.Visible = true;
-                    progressBar1.Minimum = 1;
-                    progressBar1.Maximum = file_length;
+                    progressBar1.Minimum = 0;
+                    progressBar1.Maximum = 100;
                     progressBar1.Value = 1;
                     progressBar1.Step = 1;
                 }
@@ -221,7 +221,7 @@ namespace WAD2PK3
                 disable_buttons();
                 // reset progress bar
                 progressBar1.Visible = true;
-                progressBar1.Minimum = 1;
+                progressBar1.Minimum = 0;
                 progressBar1.Maximum = LoadedWADFile.numlumps;
                 progressBar1.Value = 1;
                 progressBar1.Step = 1;

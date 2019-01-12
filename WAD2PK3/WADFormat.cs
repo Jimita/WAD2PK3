@@ -58,8 +58,7 @@ namespace WADFormat
             if (!terminal_output) MessageBox.Show(error, "FATAL EXCEPTION", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
             {
-                Console.Clear();
-                Console.Write("FATAL EXCEPTION! ");
+                Console.Write("\nFATAL EXCEPTION! ");
                 Console.WriteLine(error);
                 Console.WriteLine("Press any key to quit.");
                 Console.ReadKey(true);
@@ -123,6 +122,7 @@ namespace WADFormat
             var fileStream = new FileStream(wadfilename, FileMode.Open);
             byte[] wad_data = new byte[fileStream.Length];
 
+            float read_percentage = 0;
             int total_read_bytes = 0;
             int bytes_to_read = (int)fileStream.Length;
             int i = 0;
@@ -158,6 +158,7 @@ namespace WADFormat
             // begin read from wad_data array
             uint num_lumps = 0;
             uint directory_offset = 0;
+            uint current_lump = 0;
 
             // read header
             for (i = 0; i < bytes_to_read;)
@@ -165,13 +166,13 @@ namespace WADFormat
                 string indentifier = read_bytes_as_string(4);
                 i += 4;
 
-                Console.WriteLine("Reading WAD header");
+                Console.WriteLine("Reading WAD header...");
 
                 // detect unsupported WAD types
                 if (indentifier == "ZWAD")
-                    FatalWADReadError("Unsupported compressed WAD indentifier");
+                    FatalWADReadError("Unsupported compressed WAD indentifier!\n(Try decompressing with JTCWADZip!)");
                 if (!(indentifier == "PWAD" || indentifier == "IWAD" || indentifier == "SDLL"))
-                    FatalWADReadError("Unknown WAD indentifier");
+                    FatalWADReadError("Unknown WAD indentifier!");
 
                 // read number of lumps
                 num_lumps = read_bytes_as_uint32();
@@ -184,6 +185,8 @@ namespace WADFormat
 
                 break;
             }
+
+            total_read_bytes = bytes_to_read - (int)directory_offset;
 
             // read from the created directory
             wad.lumps = new WADLump[num_lumps];
@@ -203,6 +206,13 @@ namespace WADFormat
                 uint offset = 0;
                 uint size = 0;
 
+                if (current_lump >= num_lumps)
+                {
+                    if (terminal_output)
+                        Console.WriteLine("\nNOTICE: The input file most likely has a corrupted directory.\n");
+                    break;
+                }
+
                 // read lump offset
                 offset = read_bytes_as_uint32();
                 i += 4;
@@ -215,7 +225,10 @@ namespace WADFormat
 
                 Console.WriteLine(string.Format("Reading lump {0} ({1} bytes, offset {2})", name, size.ToString(), offset.ToString()));
 
-                if (sender != null) (sender as BackgroundWorker).ReportProgress((int)(i - directory_offset) + total_read_bytes);
+                read_percentage = current_lump;
+                read_percentage /= num_lumps;
+                read_percentage *= 100;
+                if (sender != null) (sender as BackgroundWorker).ReportProgress(Math.Min((int)read_percentage, 100));
 
                 // identify lump type
                 bool is_marker = false;
@@ -343,7 +356,7 @@ namespace WADFormat
                     if (!IsLumpGraphic(lump_data, size))
                         current_lump_type = LumpType.Generic;
                 }
-                skiplumpwrite: wad.numlumps++;
+                skiplumpwrite: wad.numlumps++; current_lump++;
                 if (singletype) current_lump_type = LumpType.Generic;
             }
 
