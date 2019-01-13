@@ -16,15 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// I began writing this program on 03/01/2019
-// and finished it on the late night of 06/01/2019.
-
 // The WAD file reading and saving classes
 // were written from scratch by me (Jimita).
-
-// The only references used in the process of writing those were
-// the Doom Wiki's article on the WAD format (https://doomwiki.org/wiki/WAD) and
-// the Doom Wiki's article on Doom's picture format (https://doomwiki.org/wiki/Picture_format).
+// The only reference used was the Doom Wiki's article on the WAD format (https://doomwiki.org/wiki/WAD).
 
 using System;
 using System.ComponentModel;
@@ -348,9 +342,8 @@ namespace WADFormat
                     }
                     wad.lumps[wad.numlumps].type = current_lump_type;
                 }
-                // Skins would be totally fine, it it wasn't for SLADE.
-                // The ordering is correct, until another editor is involved.
-                // Now they need to go inside a folder.
+                // The ordering is actually written correctly without the folders,
+                // until another editor is involved
                 if (current_lump_type == LumpType.Skin && name.Substring(0, 6) != "S_SKIN")
                 {
                     if (!IsLumpGraphic(lump_data, size))
@@ -649,8 +642,8 @@ namespace WADFormat
                             {
                                 if (lump.type != LumpType.Marker || (lump.lumpname == "FA_START" || lump.lumpname == "FA_END"))
                                 {
-                                    // Fixes http://mb.srb2.org/showthread.php?p=804347
                                     // Write the directory before writing the file.
+                                    // This is required for SRB2's PK3 implementation.
                                     string directory = IdentifyDirectory(lump, WriteMusicFolder, WriteSFXFolder);
                                     if (directory != null)
                                     {
