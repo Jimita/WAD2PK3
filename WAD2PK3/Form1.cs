@@ -292,7 +292,7 @@ namespace WAD2PK3
         }
 
         // ===============================
-        private void SetupWADList()
+        private void SetupLumpList()
         {
             dataGridView1.ColumnCount = 3;
             dataGridView1.Columns[0].Name = "Lump Name";
@@ -306,21 +306,24 @@ namespace WAD2PK3
 
             foreach (WADLump lump in LoadedWADFile.lumps)
             {
-                string[] formatted = {" " + lump.lumpname, SizeSuffix(lump.length), lump.type.ToString()};
+                string lumptype = lump.type.ToString();
+                if (lumptype == "Skin" && !(lump.lumpname.Length >= 6 && lump.lumpname.Substring(0, 6) == "S_SKIN"))
+                    lumptype = "Sprite";
+
+                string[] formatted = { " " + lump.lumpname, SizeSuffix(lump.length), lumptype };
                 DataGridViewRow theRow = dataGridView1.Rows[dataGridView1.Rows.Add(formatted)];
-                if (lump.type.ToString() == "Graphic"
-                || lump.type.ToString() == "Sprite" || lump.type.ToString() == "Patch"
-                || lump.type.ToString() == "Texture" || lump.type.ToString() == "Flat")
+                if (lumptype == "Graphic" || lumptype == "Sprite" || lumptype == "Patch"
+                 || lumptype == "Texture" || lumptype == "Flat")
                     theRow.DefaultCellStyle.BackColor = Color.FromArgb(209, 209, 255);
-                else if (lump.type.ToString() == "Music" || lump.type.ToString() == "Sound")
+                else if (lumptype == "Music" || lumptype == "Sound")
                     theRow.DefaultCellStyle.BackColor = Color.FromArgb(255, 209, 209);
-                else if (lump.type.ToString() == "Map")
+                else if (lumptype == "Map")
                     theRow.DefaultCellStyle.BackColor = Color.FromArgb(219, 255, 227);
-                else if (lump.type.ToString() == "Lua" || lump.type.ToString() == "SOC")
+                else if (lumptype == "Lua" || lumptype == "SOC")
                     theRow.DefaultCellStyle.BackColor = Color.FromArgb(239, 216, 115);
-                else if (lump.type.ToString() == "Palette" || lump.type.ToString() == "Colormap"
-                    || lump.type.ToString() == "Transmap" || lump.type.ToString() == "Fademask"
-                    || lump.type.ToString() == "Demo"
+                else if (lumptype == "Palette" || lumptype == "Colormap"
+                      || lumptype == "Transmap" || lumptype == "Fademask"
+                      || lumptype == "Demo"
                     )
                     theRow.DefaultCellStyle.BackColor = Color.FromArgb(255, 241, 209);
             }
@@ -328,7 +331,7 @@ namespace WAD2PK3
 
         private void dataGridView1_Update()
         {
-            if (WADLoaded) SetupWADList();
+            if (WADLoaded) SetupLumpList();
         }
 
         private void disable_buttons()
