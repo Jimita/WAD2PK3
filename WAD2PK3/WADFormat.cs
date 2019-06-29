@@ -72,7 +72,7 @@ namespace WADFormat
                 }
                 uint lump_read_bytes_as_uint32()
                 {
-                    if (read + 3 > size) return 0;
+                    if (read + 4 > size) return 0;
                     return BitConverter.ToUInt32(new byte[4] { lump_data[read], lump_data[read + 1], lump_data[read + 2], lump_data[read + 3] }, 0);
                 }
                 uint width = 0, height = 0;
