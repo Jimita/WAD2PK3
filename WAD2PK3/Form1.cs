@@ -268,20 +268,13 @@ namespace WAD2PK3
         string DialogSave_Filter = "PK3 file (*.pk3)|*.pk3|ZIP file (*.zip)|*.zip|All files (*.*)|*.*";
         string[] Error_Messages =
         {
-            "With great C# comes great Exceptions",
-            "I'll strap a firework to me tail and fly away",
-            "NOOOOOOOooooooooo.......",
+            "Expect Exceptions",
+            "Maybe you should report this error",
+            "pk3 machine :b:roke",
             "Failure",
-            "He's dead, Jim",
             "Not today",
-            "I am absolutely and thoroughly done with you",
-            "It can only be attributable to human error",
-            "Something happened",
-            "You can't do that",
-            "This is the wrongest you've ever got it.",
-            "That's it I've had it with you that does it I'm done that's the last straw",
-            "The operation finished successfully",
-            "Jimita the Cat proudly presents:",
+            "No",
+            "You CAN'T KEEP DOING THAT",
         };
 
         // Error
