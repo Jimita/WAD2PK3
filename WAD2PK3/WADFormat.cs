@@ -1,6 +1,6 @@
 /*  
  *  WADFormat.cs
- *  Copyright (C) 2019 "Jimita"
+ *  CCopyright (C) 2019 Jaime "Lactozilla" Passos
 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// The WAD file reading and saving classes
-// were written from scratch by me (Jimita).
+// The WAD file reading and saving code was written from scratch by me (Lactozilla).
 // The only reference used was the Doom Wiki's article on the WAD format (https://doomwiki.org/wiki/WAD).
 
 using System;
