@@ -1,6 +1,6 @@
 ﻿/*  
  *  WAD2PK3
- *  Copyright (C) 2019 "Jimita"
+ *  Copyright (C) 2019 Jaime "Lactozilla" Passos
 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
