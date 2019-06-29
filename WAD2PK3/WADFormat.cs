@@ -333,13 +333,54 @@ namespace WADFormat
                             wad.lumps[wad.numlumps].length = (int)size;
                         }
 
+                        // Is this lump even an actual sprite to begin with?
+                        if (current_lump_type == LumpType.Sprite)
+                        {
+                            LumpType newtype = current_lump_type;
+                            string angle;
+                            bool isNumber;
+                            int n;
+                            // Check the filename.
+                            if (name.Length <= 5)                // "NAME" or just "NAMEx", but no angle
+                                newtype = LumpType.Graphic;
+                            else if (name.Length == 6)           // "NAMExx"
+                            {
+                                angle = name.Substring(5,1);
+                                isNumber = int.TryParse(angle, out n);
+                                if (!isNumber) // angle isn't a number...
+                                    newtype = LumpType.Graphic;
+                            }
+                            else if (name.Length == 7)           // "NAMExxy", missing angle for mirrored frame
+                                newtype = LumpType.Graphic;
+                            else if (name.Length == 8)           // "NAMExxyy"
+                            {
+                                // parse the first angle
+                                angle = name.Substring(5, 1);
+                                isNumber = int.TryParse(angle, out n);
+                                if (!isNumber) // angle isn't a number...
+                                    newtype = LumpType.Graphic;
+                                else
+                                {
+                                    // parse the second angle
+                                    angle = name.Substring(7, 1);
+                                    isNumber = int.TryParse(angle, out n);
+                                    if (!isNumber) // angle isn't a number...
+                                        newtype = LumpType.Graphic;
+                                }
+                            }
+                            // Now check the lump contents.
+                            if (!IsLumpGraphic(lump_data, size))
+                                newtype = LumpType.Generic;       // Not even a graphic
+                            wad.lumps[wad.numlumps].type = newtype;
+                        }
                         // Detect if the lump is a graphic.
-                        if (current_lump_type == LumpType.Generic)
+                        else if (current_lump_type == LumpType.Generic)
                         {
                             if (IsLumpGraphic(lump_data, size))
-                                current_lump_type = LumpType.Graphic;
+                                wad.lumps[wad.numlumps].type = LumpType.Graphic;
                         }
-                        wad.lumps[wad.numlumps].type = current_lump_type;
+                        else
+                            wad.lumps[wad.numlumps].type = current_lump_type;
                     }
                     // The ordering is actually written correctly without the folders,
                     // until another editor is involved
@@ -428,12 +469,10 @@ namespace WADFormat
                 {
                     case LumpType.Lua: { ext = ".lua"; break; }
                     case LumpType.SOC: { ext = ".soc"; break; }
-                    // === FALLBACKS ===
-                    case LumpType.Texture:
-                    case LumpType.Patch:
-                    case LumpType.Sprite:
+                    case LumpType.Texture: { ext = ".tex"; break; }
+                    case LumpType.Patch: { ext = ".pat"; break; }
+                    case LumpType.Sprite: { ext = ".spr"; break; }
                     case LumpType.Graphic: { ext = ".gfx"; break; }
-                    // === END FALLBACKS ===
                     case LumpType.Flat: { ext = ".raw"; break; }
                     case LumpType.Music: { ext = IdentifyMusicLumpExtension(lumpy, ".mus"); break; }
                     case LumpType.Sound: { ext = IdentifyMusicLumpExtension(lumpy, ".sfx"); break; }
@@ -443,8 +482,8 @@ namespace WADFormat
                     case LumpType.Colormap: { ext = ".clm"; break; }
                     default: { ext = ".lmp"; break; }
                 }
+                if (UppercaseExtensions) ext = ext.ToUpper();
             }
-            if (UppercaseExtensions) ext = ext.ToUpper();
 
             if (lumpy.maplumpinfo.start_lump > 0)
                 return "Maps/" + f + ext;
