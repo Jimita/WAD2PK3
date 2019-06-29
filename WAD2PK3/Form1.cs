@@ -436,7 +436,13 @@ namespace WAD2PK3
 
         private void thread_save_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
-            Success("Successfully saved " + Path.GetFileName(output_path) + "!");
+            if (e.Error != null)
+            {
+                // uh oh! exception thrown
+                Error(e.Error.ToString());
+            }
+            else
+                Success("Successfully saved " + Path.GetFileName(output_path) + "!");
             // update GUI
             enable_buttons();
             progressBar1.Visible = false;
@@ -455,17 +461,25 @@ namespace WAD2PK3
 
         private void thread_load_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
+            if (e.Error != null)
+            {
+                // uh oh! exception thrown
+                Error(e.Error.ToString());
+            }
+            else
+            {
+                // update GUI
+                if (!IsKartWAD)
+                    fileicon.Image = Properties.Resources.M_FWAD;
+                else
+                    fileicon.Image = Properties.Resources.M_FKART;
+                label2.Text = Path.GetFileName(input_path);
+
+                dataGridView1_Update();
+            }
             // update GUI
             enable_buttons();
             progressBar1.Visible = false;
-
-            if (!IsKartWAD)
-                fileicon.Image = Properties.Resources.M_FWAD;
-            else
-                fileicon.Image = Properties.Resources.M_FKART;
-            label2.Text = Path.GetFileName(input_path);
-
-            dataGridView1_Update();
         }
     }
 }

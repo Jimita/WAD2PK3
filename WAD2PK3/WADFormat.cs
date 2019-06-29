@@ -112,250 +112,251 @@ namespace WADFormat
             wad.filename = wadfilename;
 
             // read wad from file stream
-            var fileStream = new FileStream(wadfilename, FileMode.Open);
-            byte[] wad_data = new byte[fileStream.Length];
-
-            float read_percentage = 0;
-            int total_read_bytes = 0;
-            int bytes_to_read = (int)fileStream.Length;
-            int i = 0;
-
-            while (bytes_to_read > 0)
+            using (FileStream fileStream = new FileStream(wadfilename, FileMode.Open))
             {
-                int n = fileStream.Read(wad_data, i, bytes_to_read);
-                if (n == 0) break;
-                bytes_to_read -= n;
-            }
-            bytes_to_read = wad_data.Length;
+                byte[] wad_data = new byte[fileStream.Length];
+                float read_percentage = 0;
+                int total_read_bytes = 0;
+                int bytes_to_read = (int)fileStream.Length;
+                int i = 0;
 
-            // byte to type
-            uint read_bytes_as_uint32()
-            {
-                return BitConverter.ToUInt32(new byte[4] {wad_data[i], wad_data[i + 1], wad_data[i + 2], wad_data[i + 3] }, 0);
-            }
-            string read_bytes_as_string(int length)
-            {
-                int real_length = 0;
-                byte[] stringdata = new byte[length];
-                for (int j = 0; j < length; j++)
+                while (bytes_to_read > 0)
                 {
-                    byte nchar = wad_data[i + j];
-                    if (nchar == 0) break;
-                    if (nchar == 47) nchar = 43; // convert / to +
-                    stringdata[j] = nchar;
-                    real_length++;
+                    int n = fileStream.Read(wad_data, i, bytes_to_read);
+                    if (n == 0) break;
+                    bytes_to_read -= n;
                 }
-                return Encoding.ASCII.GetString(stringdata, 0, real_length);
-            }
+                bytes_to_read = wad_data.Length;
 
-            // begin read from wad_data array
-            uint num_lumps = 0;
-            uint directory_offset = 0;
-            uint current_lump = 0;
-
-            // read header
-            for (i = 0; i < bytes_to_read;)
-            {
-                string indentifier = read_bytes_as_string(4);
-                i += 4;
-
-                Console.WriteLine("Reading WAD header...");
-
-                // detect unsupported WAD types
-                if (indentifier == "ZWAD")
-                    FatalWADReadError("Unsupported compressed WAD indentifier!");
-                if (!(indentifier == "PWAD" || indentifier == "IWAD" || indentifier == "SDLL"))
-                    FatalWADReadError("Unknown WAD indentifier!");
-
-                // read number of lumps
-                num_lumps = read_bytes_as_uint32();
-                i += 4;
-                // read directory offset
-                directory_offset = read_bytes_as_uint32();
-                i += 4;
-
-                Console.WriteLine("Type {0}, {1} lumps", indentifier, num_lumps);
-
-                break;
-            }
-
-            total_read_bytes = bytes_to_read - (int)directory_offset;
-
-            // read from the created directory
-            wad.lumps = new WADLump[num_lumps];
-            wad.numlumps = 0;
-
-            LumpType current_lump_type = LumpType.Generic;
-            bool singletype = true;
-
-            int curmaplump = 0;
-            int lastmaplumpmarker = 0;
-            bool identifymaplumps = false;
-
-            // lump write loop
-            for (i = (int)directory_offset; i < bytes_to_read;)
-            {
-                string name;
-                uint offset = 0;
-                uint size = 0;
-
-                if (current_lump >= num_lumps)
+                // byte to type
+                uint read_bytes_as_uint32()
                 {
-                    if (terminal_output)
-                        Console.WriteLine("\nNOTICE: The input file most likely has a corrupted directory.\n");
+                    return BitConverter.ToUInt32(new byte[4] { wad_data[i], wad_data[i + 1], wad_data[i + 2], wad_data[i + 3] }, 0);
+                }
+                string read_bytes_as_string(int length)
+                {
+                    int real_length = 0;
+                    byte[] stringdata = new byte[length];
+                    for (int j = 0; j < length; j++)
+                    {
+                        byte nchar = wad_data[i + j];
+                        if (nchar == 0) break;
+                        if (nchar == 47) nchar = 43; // convert / to +
+                        stringdata[j] = nchar;
+                        real_length++;
+                    }
+                    return Encoding.ASCII.GetString(stringdata, 0, real_length);
+                }
+
+                // begin read from wad_data array
+                uint num_lumps = 0;
+                uint directory_offset = 0;
+                uint current_lump = 0;
+
+                // read header
+                for (i = 0; i < bytes_to_read;)
+                {
+                    string indentifier = read_bytes_as_string(4);
+                    i += 4;
+
+                    Console.WriteLine("Reading WAD header...");
+
+                    // detect unsupported WAD types
+                    if (indentifier == "ZWAD")
+                        FatalWADReadError("Unsupported compressed WAD indentifier!");
+                    if (!(indentifier == "PWAD" || indentifier == "IWAD" || indentifier == "SDLL"))
+                        FatalWADReadError("Unknown WAD indentifier!");
+
+                    // read number of lumps
+                    num_lumps = read_bytes_as_uint32();
+                    i += 4;
+                    // read directory offset
+                    directory_offset = read_bytes_as_uint32();
+                    i += 4;
+
+                    Console.WriteLine("Type {0}, {1} lumps", indentifier, num_lumps);
+
                     break;
                 }
 
-                // read lump offset
-                offset = read_bytes_as_uint32();
-                i += 4;
-                // read lump size
-                size = read_bytes_as_uint32();
-                i += 4;
-                // read lump name
-                name = read_bytes_as_string(8);
-                i += 8;
+                total_read_bytes = bytes_to_read - (int)directory_offset;
 
-                Console.WriteLine(string.Format("Reading lump {0} ({1} bytes, offset {2})", name, size.ToString(), offset.ToString()));
+                // read from the created directory
+                wad.lumps = new WADLump[num_lumps];
+                wad.numlumps = 0;
 
-                read_percentage = current_lump;
-                read_percentage /= num_lumps;
-                read_percentage *= 100;
-                if (sender != null) (sender as BackgroundWorker).ReportProgress(Math.Min((int)read_percentage, 100));
+                LumpType current_lump_type = LumpType.Generic;
+                bool singletype = true;
 
-                // identify lump type
-                bool is_marker = false;
-                if (current_lump_type == LumpType.Generic || current_lump_type == LumpType.Skin)
+                int curmaplump = 0;
+                int lastmaplumpmarker = 0;
+                bool identifymaplumps = false;
+
+                // lump write loop
+                for (i = (int)directory_offset; i < bytes_to_read;)
                 {
-                    if (current_lump_type != LumpType.Skin)
-                        singletype = true;
-                    if (name.Length >= 4 && name.Substring(0, 4) == "LUA_") current_lump_type = LumpType.Lua;
-                    else if (name.Length >= 4 && name.Substring(0, 4) == "SOC_") current_lump_type = LumpType.SOC;
-                    else if (name == "MAINCFG") current_lump_type = LumpType.SOC; /* SOC */
-                    else if (name == "OBJCTCFG") current_lump_type = LumpType.SOC; /* SOC */
-                    else if (name.Substring(0, 2) == "O_") current_lump_type = LumpType.Music;
-                    else if (name.Substring(0, 2) == "D_") current_lump_type = LumpType.Music; /* MIDI */
-                    else if (name.Substring(0, 2) == "DS") current_lump_type = LumpType.Sound; /* Sound (maybe) */
-                    else if (name == "PLAYPAL" || (name.Length == 7 && name.Substring(0, 3) == "PAL")) current_lump_type = LumpType.Palette;
-                    else if (name == "COLORMAP" || (name.Length == 7 && name.Substring(0, 3) == "CLM")) current_lump_type = LumpType.Colormap;
-                    else if (name.Length == 7 && name.Substring(0, 5) == "TRANS") current_lump_type = LumpType.Transmap;
-                    else if (name.Length == 8 && name.Substring(0, 4) == "FADE") current_lump_type = LumpType.Fademask;
-                    else if (name.Length == 8 && name.Substring(0, 5) == "DEMO_") current_lump_type = LumpType.Demo;
-                    else if (name == "CREDITS" || name == "README" || name == "ANIMDEFS" || name == "TEXTURES") current_lump_type = LumpType.Text; /* Text */
-                    // marker start
-                    else if (name == "DT_START") { current_lump_type = LumpType.Generic; is_marker = true; singletype = false; }
-                    else if (name == "LV_START") { current_lump_type = LumpType.Generic; is_marker = true; singletype = false; }
-                    else if (name == "FA_START") { current_lump_type = LumpType.Fademask; is_marker = true; singletype = false; }
-                    else if (name == "GX_START") { current_lump_type = LumpType.Graphic; is_marker = true; singletype = false; }
-                    else if (name == "TX_START") { current_lump_type = LumpType.Texture; is_marker = true; singletype = false; }
-                    else if (name == "P_START" || name == "PP_START") { current_lump_type = LumpType.Patch; is_marker = true; singletype = false; }
-                    else if (name == "F_START" || name == "FF_START") { current_lump_type = LumpType.Flat; is_marker = true; singletype = false; }
-                    else if (name == "S_START" || name == "SS_START") { current_lump_type = LumpType.Sprite; is_marker = true; singletype = false; }
-                    // skins
-                    else if (name.Length >= 6 && name.Substring(0, 6) == "S_SKIN") { current_lump_type = LumpType.Skin; singletype = false; }
-                }
-                else
-                {
-                    // marker end
-                    if (   name == "DT_END"|| name == "LV_END"
-                        || name == "TX_END"|| name == "GX_END"
-                        || name == "P_END" || name == "PP_END"
-                        || name == "F_END" || name == "FF_END"
-                        || name == "S_END" || name == "SS_END"
-                        || name == "FA_END"
-                        )
+                    string name;
+                    uint offset = 0;
+                    uint size = 0;
+
+                    if (current_lump >= num_lumps)
                     {
-                        current_lump_type = LumpType.Generic;
-                        is_marker = true;
-                        singletype = false;
+                        if (terminal_output)
+                            Console.WriteLine("\nNOTICE: The input file most likely has a corrupted directory.\n");
+                        break;
                     }
-                }
 
-                // ========= MAP SAVING =========
-                bool wrotemapmarker = false;
-                if (identifymaplumps)
-                {
-                    if (curmaplump > 0 && (curmaplump > 10 || name != maplumpordering[curmaplump]))
+                    // read lump offset
+                    offset = read_bytes_as_uint32();
+                    i += 4;
+                    // read lump size
+                    size = read_bytes_as_uint32();
+                    i += 4;
+                    // read lump name
+                    name = read_bytes_as_string(8);
+                    i += 8;
+
+                    Console.WriteLine(string.Format("Reading lump {0} ({1} bytes, offset {2})", name, size.ToString(), offset.ToString()));
+
+                    read_percentage = current_lump;
+                    read_percentage /= num_lumps;
+                    read_percentage *= 100;
+                    if (sender != null) (sender as BackgroundWorker).ReportProgress(Math.Min((int)read_percentage, 100));
+
+                    // identify lump type
+                    bool is_marker = false;
+                    if (current_lump_type == LumpType.Generic || current_lump_type == LumpType.Skin)
                     {
-                        wad.lumps[lastmaplumpmarker].maplumpinfo.end_lump = wad.numlumps - 1;
-                        curmaplump = 0;
-                        identifymaplumps = false;
+                        if (current_lump_type != LumpType.Skin)
+                            singletype = true;
+                        if (name.Length >= 4 && name.Substring(0, 4) == "LUA_") current_lump_type = LumpType.Lua;
+                        else if (name.Length >= 4 && name.Substring(0, 4) == "SOC_") current_lump_type = LumpType.SOC;
+                        else if (name == "MAINCFG") current_lump_type = LumpType.SOC; /* SOC */
+                        else if (name == "OBJCTCFG") current_lump_type = LumpType.SOC; /* SOC */
+                        else if (name.Substring(0, 2) == "O_") current_lump_type = LumpType.Music;
+                        else if (name.Substring(0, 2) == "D_") current_lump_type = LumpType.Music; /* MIDI */
+                        else if (name.Substring(0, 2) == "DS") current_lump_type = LumpType.Sound; /* Sound (maybe) */
+                        else if (name == "PLAYPAL" || (name.Length == 7 && name.Substring(0, 3) == "PAL")) current_lump_type = LumpType.Palette;
+                        else if (name == "COLORMAP" || (name.Length == 7 && name.Substring(0, 3) == "CLM")) current_lump_type = LumpType.Colormap;
+                        else if (name.Length == 7 && name.Substring(0, 5) == "TRANS") current_lump_type = LumpType.Transmap;
+                        else if (name.Length == 8 && name.Substring(0, 4) == "FADE") current_lump_type = LumpType.Fademask;
+                        else if (name.Length == 8 && name.Substring(0, 5) == "DEMO_") current_lump_type = LumpType.Demo;
+                        else if (name == "CREDITS" || name == "README" || name == "ANIMDEFS" || name == "TEXTURES") current_lump_type = LumpType.Text; /* Text */
+                        // marker start
+                        else if (name == "DT_START") { current_lump_type = LumpType.Generic; is_marker = true; singletype = false; }
+                        else if (name == "LV_START") { current_lump_type = LumpType.Generic; is_marker = true; singletype = false; }
+                        else if (name == "FA_START") { current_lump_type = LumpType.Fademask; is_marker = true; singletype = false; }
+                        else if (name == "GX_START") { current_lump_type = LumpType.Graphic; is_marker = true; singletype = false; }
+                        else if (name == "TX_START") { current_lump_type = LumpType.Texture; is_marker = true; singletype = false; }
+                        else if (name == "P_START" || name == "PP_START") { current_lump_type = LumpType.Patch; is_marker = true; singletype = false; }
+                        else if (name == "F_START" || name == "FF_START") { current_lump_type = LumpType.Flat; is_marker = true; singletype = false; }
+                        else if (name == "S_START" || name == "SS_START") { current_lump_type = LumpType.Sprite; is_marker = true; singletype = false; }
+                        // skins
+                        else if (name.Length >= 6 && name.Substring(0, 6) == "S_SKIN") { current_lump_type = LumpType.Skin; singletype = false; }
                     }
                     else
                     {
-                        current_lump_type = LumpType.Map;
-                        curmaplump++;
-                    }
-                }
-                if (name.Substring(0, 3) == "MAP" && name.Length == 5)
-                {
-                    identifymaplumps = true;
-                    lastmaplumpmarker = wad.numlumps;
-                    wrotemapmarker = true;
-                    is_marker = true;
-                    curmaplump++;
-
-                    wad.lumps[lastmaplumpmarker] = new WADLump();
-                    wad.lumps[lastmaplumpmarker].length = 0;
-                    wad.lumps[lastmaplumpmarker].lumpname = name;
-                    wad.lumps[lastmaplumpmarker].type = LumpType.Map;
-                    wad.lumps[lastmaplumpmarker].maplumpinfo.start_lump = lastmaplumpmarker;
-                }
-                if (wrotemapmarker)
-                    goto skiplumpwrite;
-                // ========= MAP SAVING =========
-
-                // write lump header
-                wad.lumps[wad.numlumps] = new WADLump();
-                wad.lumps[wad.numlumps].length = 0;
-                wad.lumps[wad.numlumps].lumpname = name;
-                if (is_marker)
-                    wad.lumps[wad.numlumps].type = LumpType.Marker;
-                if (!identifymaplumps)
-                {
-                    wad.lumps[wad.numlumps].maplumpinfo.start_lump = -1;
-                    wad.lumps[wad.numlumps].maplumpinfo.end_lump = -1;
-                }
-
-                // read lump data
-                byte[] lump_data = new byte[size];
-                if (!is_marker)
-                {
-                    if (size > 0)
-                    {
-                        int k = 0;
-                        for (int j = (int)offset; j < offset + size; j++)
+                        // marker end
+                        if (name == "DT_END" || name == "LV_END"
+                            || name == "TX_END" || name == "GX_END"
+                            || name == "P_END" || name == "PP_END"
+                            || name == "F_END" || name == "FF_END"
+                            || name == "S_END" || name == "SS_END"
+                            || name == "FA_END"
+                            )
                         {
-                            lump_data[k] = wad_data[j];
-                            k++; total_read_bytes++;
+                            current_lump_type = LumpType.Generic;
+                            is_marker = true;
+                            singletype = false;
                         }
-                        wad.lumps[wad.numlumps].data = lump_data;
-                        wad.lumps[wad.numlumps].length = (int)size;
                     }
 
-                    // Detect if the lump is a graphic.
-                    if (current_lump_type == LumpType.Generic)
+                    // ========= MAP SAVING =========
+                    bool wrotemapmarker = false;
+                    if (identifymaplumps)
                     {
-                        if (IsLumpGraphic(lump_data, size))
-                            current_lump_type = LumpType.Graphic;
+                        if (curmaplump > 0 && (curmaplump > 10 || name != maplumpordering[curmaplump]))
+                        {
+                            wad.lumps[lastmaplumpmarker].maplumpinfo.end_lump = wad.numlumps - 1;
+                            curmaplump = 0;
+                            identifymaplumps = false;
+                        }
+                        else
+                        {
+                            current_lump_type = LumpType.Map;
+                            curmaplump++;
+                        }
                     }
-                    wad.lumps[wad.numlumps].type = current_lump_type;
-                }
-                // The ordering is actually written correctly without the folders,
-                // until another editor is involved
-                if (current_lump_type == LumpType.Skin && name.Substring(0, 6) != "S_SKIN")
-                {
-                    if (!IsLumpGraphic(lump_data, size))
-                        current_lump_type = LumpType.Generic;
-                }
-                skiplumpwrite: wad.numlumps++; current_lump++;
-                if (singletype) current_lump_type = LumpType.Generic;
-            }
+                    if (name.Substring(0, 3) == "MAP" && name.Length == 5)
+                    {
+                        identifymaplumps = true;
+                        lastmaplumpmarker = wad.numlumps;
+                        wrotemapmarker = true;
+                        is_marker = true;
+                        curmaplump++;
 
-            // close file stream
-            fileStream.Close();
-            // done!
-            return wad;
+                        wad.lumps[lastmaplumpmarker] = new WADLump();
+                        wad.lumps[lastmaplumpmarker].length = 0;
+                        wad.lumps[lastmaplumpmarker].lumpname = name;
+                        wad.lumps[lastmaplumpmarker].type = LumpType.Map;
+                        wad.lumps[lastmaplumpmarker].maplumpinfo.start_lump = lastmaplumpmarker;
+                    }
+                    if (wrotemapmarker)
+                        goto skiplumpwrite;
+                    // ========= MAP SAVING =========
+
+                    // write lump header
+                    wad.lumps[wad.numlumps] = new WADLump();
+                    wad.lumps[wad.numlumps].length = 0;
+                    wad.lumps[wad.numlumps].lumpname = name;
+                    if (is_marker)
+                        wad.lumps[wad.numlumps].type = LumpType.Marker;
+                    if (!identifymaplumps)
+                    {
+                        wad.lumps[wad.numlumps].maplumpinfo.start_lump = -1;
+                        wad.lumps[wad.numlumps].maplumpinfo.end_lump = -1;
+                    }
+
+                    // read lump data
+                    byte[] lump_data = new byte[size];
+                    if (!is_marker)
+                    {
+                        if (size > 0)
+                        {
+                            int k = 0;
+                            for (int j = (int)offset; j < offset + size; j++)
+                            {
+                                lump_data[k] = wad_data[j];
+                                k++; total_read_bytes++;
+                            }
+                            wad.lumps[wad.numlumps].data = lump_data;
+                            wad.lumps[wad.numlumps].length = (int)size;
+                        }
+
+                        // Detect if the lump is a graphic.
+                        if (current_lump_type == LumpType.Generic)
+                        {
+                            if (IsLumpGraphic(lump_data, size))
+                                current_lump_type = LumpType.Graphic;
+                        }
+                        wad.lumps[wad.numlumps].type = current_lump_type;
+                    }
+                    // The ordering is actually written correctly without the folders,
+                    // until another editor is involved
+                    if (current_lump_type == LumpType.Skin && name.Substring(0, 6) != "S_SKIN")
+                    {
+                        if (!IsLumpGraphic(lump_data, size))
+                            current_lump_type = LumpType.Generic;
+                    }
+                    skiplumpwrite: wad.numlumps++; current_lump++;
+                    if (singletype) current_lump_type = LumpType.Generic;
+                }
+
+                // close file stream
+                fileStream.Close();
+                // done!
+                return wad;
+            }
         }
     }
     // the wad itself
