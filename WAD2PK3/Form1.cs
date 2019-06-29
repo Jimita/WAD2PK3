@@ -79,7 +79,7 @@ namespace WAD2PK3
                     terminal_output = true;
                     AllocConsole();
 
-                    Console.WriteLine("WAD2PK3 by Jimita the Cat");
+                    Console.WriteLine("WAD2PK3 by Jaime \"Lactozilla\" Passos");
 
                     checkBox_extensions.Checked = true;
                     checkBox_uppercase.Checked = true;
@@ -92,19 +92,37 @@ namespace WAD2PK3
 
                     for (int i = 0; i < args.Length; i++)
                     {
-                        if (args[i] == "-input" && i + 1 < args.Length)
+                        if (args[i] == "-input")
                         {
-                            if (absolute_path(input)) input_path = args[i + 1];
-                            else input_path = app_path + "\\" + args[i + 1];
-                            has_input = true;
-                            i++;
+                            if (i + 1 < args.Length)
+                            {
+                                string filename = args[i + 1];
+                                if (filename.Substring(0, 0) == "-")
+                                    Error("Unexpected argument in input filename!");
+                                if (absolute_path(input)) input_path = filename;
+                                else input_path = app_path + "\\" + filename;
+                                has_input = true;
+                                i++;
+                            }
+                            else
+                                Error("Input file not specified!");
+                            if (!File.Exists(input_path))
+                                Error("Input file does not exist!");
                         }
-                        else if (args[i] == "-output" && i + 1 < args.Length)
+                        else if (args[i] == "-output")
                         {
-                            if (absolute_path(input)) output_path = args[i + 1];
-                            else output_path = app_path + "\\" + args[i + 1];
-                            has_output = true;
-                            i++;
+                            if (i + 1 < args.Length)
+                            {
+                                string filename = args[i + 1];
+                                if (filename.Substring(0, 0) == "-")
+                                    Error("Unexpected argument in input filename!");
+                                if (absolute_path(input)) output_path = filename;
+                                else output_path = app_path + "\\" + filename;
+                                has_output = true;
+                                i++;
+                            }
+                            else
+                                Error("Output file not specified!");
                         }
 
                         else if (args[i] == "-noextensions") checkBox_extensions.Checked = false;
@@ -142,8 +160,8 @@ namespace WAD2PK3
                         Console.WriteLine("\n");
                         open_file(false);
                         save_file(false);
-                        Success("Successfully saved " + Path.GetFileName(output_path) + "!");
-                        kms();
+                        //Success("Successfully saved " + Path.GetFileName(output_path) + "!");
+                        Process.GetCurrentProcess().Kill();
                     }
                     else if (has_output) Error("Input file not specified!");
                 }

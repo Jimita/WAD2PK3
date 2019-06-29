@@ -163,7 +163,7 @@ namespace WADFormat
 
                 // detect unsupported WAD types
                 if (indentifier == "ZWAD")
-                    FatalWADReadError("Unsupported compressed WAD indentifier!\n(Try decompressing with JTCWADZip!)");
+                    FatalWADReadError("Unsupported compressed WAD indentifier!");
                 if (!(indentifier == "PWAD" || indentifier == "IWAD" || indentifier == "SDLL"))
                     FatalWADReadError("Unknown WAD indentifier!");
 
