@@ -99,7 +99,7 @@ namespace WAD2PK3
                                 string filename = args[i + 1];
                                 if (filename.Substring(0, 0) == "-")
                                     Error("Unexpected argument in input filename!");
-                                if (absolute_path(input)) input_path = filename;
+                                if (absolute_path(filename)) input_path = filename;
                                 else input_path = app_path + "\\" + filename;
                                 has_input = true;
                                 i++;
@@ -116,7 +116,7 @@ namespace WAD2PK3
                                 string filename = args[i + 1];
                                 if (filename.Substring(0, 0) == "-")
                                     Error("Unexpected argument in input filename!");
-                                if (absolute_path(input)) output_path = filename;
+                                if (absolute_path(filename)) output_path = filename;
                                 else output_path = app_path + "\\" + filename;
                                 has_output = true;
                                 i++;
@@ -153,14 +153,13 @@ namespace WAD2PK3
                                 else if (key == 'n')
                                 {
                                     Console.WriteLine("\nFile overwrite cancelled by user request.");
-                                    kms();
+                                    quit();
                                 }
                             }
                         }
                         Console.WriteLine("\n");
                         open_file(false);
                         save_file(false);
-                        //Success("Successfully saved " + Path.GetFileName(output_path) + "!");
                         Process.GetCurrentProcess().Kill();
                     }
                     else if (has_output) Error("Input file not specified!");
@@ -168,7 +167,7 @@ namespace WAD2PK3
             }
         }
 
-        private void kms()
+        private void quit()
         {
             Console.WriteLine("Press any key to quit.");
             Console.ReadKey(true);
@@ -298,7 +297,7 @@ namespace WAD2PK3
             {
                 Console.Write("ERROR! ");
                 Console.WriteLine(message);
-                kms();
+                quit();
             }
         }
 
